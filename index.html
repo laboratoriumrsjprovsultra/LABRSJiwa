@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SIMPEL-TAT — Sistem Informasi Pelayanan Laboratorium Turn Around Time</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#0F6E56;--teal-d:#084D3C;--teal-l:#1D9E75;--teal-bg:#E1F5EE;--teal-mid:#5DCAA7;
+  --mint:#02C39A;--amber:#BA7517;--amber-bg:#FAEEDA;--amber-l:#FAC775;
+  --red:#A32D2D;--red-bg:#FCEBEB;--blue:#185FA5;--blue-bg:#E6F1FB;
+  --green:#3B6D11;--green-bg:#EAF3DE;
+  --bg:#F4F7F6;--surface:#FFFFFF;--surface2:#F0F4F2;
+  --txt:#1C2B27;--txt2:#4A6358;--txt3:#8BA99C;
+  --border:#D4E5DE;--border2:#B8D4CA;
+  --font-head:'Georgia',serif;--font-ui:'Trebuchet MS','Segoe UI',sans-serif;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 4px rgba(0,60,40,.07),0 4px 16px rgba(0,60,40,.05);
+}
+body{font-family:var(--font-ui);background:var(--bg);color:var(--txt);font-size:14px;min-height:100vh}
+
+/* ── TOPBAR ── */
+#topbar{background:var(--teal-d);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.18)}
+.brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
+.brand-logo{width:36px;height:36px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.brand-logo svg{width:22px;height:22px}
+.brand-text h1{font-size:17px;font-weight:700;letter-spacing:.4px;font-family:var(--font-head);line-height:1}
+.brand-text span{font-size:10px;opacity:.65;letter-spacing:.3px}
+#main-nav{display:flex;gap:2px}
+#main-nav button{background:transparent;border:none;color:rgba(255,255,255,.75);padding:7px 14px;border-radius:7px;cursor:pointer;font-size:13px;font-family:var(--font-ui);font-weight:500;transition:.15s;display:flex;align-items:center;gap:6px}
+#main-nav button svg{width:15px;height:15px;opacity:.8}
+#main-nav button:hover{background:rgba(255,255,255,.12);color:#fff}
+#main-nav button.active{background:rgba(255,255,255,.2);color:#fff}
+#user-bar{display:flex;align-items:center;gap:10px;color:#fff}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--teal-d)}
+#user-bar .role-badge{background:rgba(255,255,255,.15);padding:2px 8px;border-radius:12px;font-size:11px;opacity:.9}
+.logout-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:12px;font-family:var(--font-ui)}
+.logout-btn:hover{background:rgba(255,255,255,.22)}
+
+/* ── LOGIN ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 56px);padding:20px}
+.login-wrap{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);border:1px solid var(--border);padding:44px 40px;width:400px;max-width:100%}
+.login-icon{width:72px;height:72px;background:var(--teal-bg);border-radius:18px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center}
+.login-icon svg{width:40px;height:40px}
+.login-wrap h2{text-align:center;font-size:22px;font-family:var(--font-head);color:var(--teal);margin-bottom:4px}
+.login-wrap .sub{text-align:center;color:var(--txt2);font-size:13px;margin-bottom:28px;line-height:1.5}
+.lf{margin-bottom:16px}
+.lf label{display:block;font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px;letter-spacing:.4px;text-transform:uppercase}
+.lf input{width:100%;padding:10px 14px;border:1px solid var(--border2);border-radius:9px;font-size:14px;background:var(--surface2);color:var(--txt);font-family:var(--font-ui);transition:.15s}
+.lf input:focus{outline:none;border-color:var(--teal-mid);background:var(--surface);box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+.login-btn-main{width:100%;padding:12px;background:var(--teal);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-ui);letter-spacing:.3px;transition:.15s;margin-top:4px}
+.login-btn-main:hover{background:var(--teal-l)}
+.login-hint{font-size:11.5px;color:var(--txt3);text-align:center;margin-top:14px;line-height:1.8;background:var(--teal-bg);border-radius:8px;padding:10px}
+#login-err{color:var(--red);font-size:12px;text-align:center;margin-top:8px;display:none}
+
+/* ── MAIN ── */
+#content{padding:24px;max-width:1160px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+
+/* ── PAGE HEADER ── */
+.page-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.page-hdr-left h2{font-size:22px;font-family:var(--font-head);color:var(--txt);line-height:1.2}
+.page-hdr-left p{font-size:13px;color:var(--txt2);margin-top:3px}
+.page-hdr-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{background:var(--surface);border-radius:var(--radius-lg);padding:18px 20px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-card .sc-label{font-size:11px;color:var(--txt2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.stat-card .sc-label svg{width:14px;height:14px}
+.stat-card .sc-val{font-size:30px;font-weight:700;font-family:var(--font-head);line-height:1}
+.stat-card .sc-sub{font-size:11px;color:var(--txt3);margin-top:4px}
+.sc-teal .sc-val{color:var(--teal)}
+.sc-green .sc-val{color:var(--green)}
+.sc-amber .sc-val{color:var(--amber)}
+.sc-red .sc-val{color:var(--red)}
+.sc-blue .sc-val{color:var(--blue)}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+.card-hdr{font-size:15px;font-weight:700;font-family:var(--font-head);color:var(--txt);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-hdr svg{width:18px;height:18px;color:var(--teal)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:720px){.two-col{grid-template-columns:1fr}}
+
+/* ── BAR CHART ── */
+.bchart{display:flex;flex-direction:column;gap:10px}
+.brow{display:flex;align-items:center;gap:10px}
+.brow .blbl{font-size:12px;color:var(--txt2);width:150px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow .btrack{flex:1;height:24px;background:var(--surface2);border-radius:6px;overflow:hidden}
+.brow .bfill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;font-size:11px;font-weight:700;color:#fff;min-width:32px}
+.brow .bstat{font-size:12px;color:var(--txt2);width:50px;text-align:right;flex-shrink:0}
+
+/* ── MONTHLY CHART ── */
+.mchart{display:flex;gap:6px;align-items:flex-end;height:120px;padding-top:8px}
+.mbar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.mbar-col{width:100%;background:var(--teal);border-radius:4px 4px 0 0;transition:.4s;min-height:4px}
+.mbar-lbl{font-size:10px;color:var(--txt3);text-align:center}
+.mbar-val{font-size:10px;color:var(--teal);font-weight:700;text-align:center}
+
+/* ── DONUT ── */
+.donut-area{display:flex;align-items:center;gap:20px}
+.dlegend{flex:1;display:flex;flex-direction:column;gap:10px}
+.dleg-item{display:flex;align-items:center;gap:9px;font-size:13px}
+.dleg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.dleg-item strong{font-size:15px;font-family:var(--font-head)}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--surface2)}
+th{padding:10px 13px;text-align:left;font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 13px;border-bottom:1px solid var(--border);color:var(--txt);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#F7FCF9}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.bg-green{background:var(--green-bg);color:var(--green)}
+.bg-red{background:var(--red-bg);color:var(--red)}
+.bg-amber{background:var(--amber-bg);color:var(--amber)}
+.bg-blue{background:var(--blue-bg);color:var(--blue)}
+.bg-gray{background:var(--surface2);color:var(--txt2)}
+.bg-teal{background:var(--teal-bg);color:var(--teal)}
+
+/* ── FORM ── */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ffull{grid-column:1/-1}
+@media(max-width:600px){.fgrid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;font-weight:700;color:var(--txt2);letter-spacing:.4px;text-transform:uppercase}
+.field label .req{color:var(--red);margin-left:2px}
+.field input,.field select,.field textarea{padding:9px 13px;border:1px solid var(--border2);border-radius:9px;font-size:13px;background:var(--surface2);color:var(--txt);font-family:var(--font-ui);transition:.15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-mid);background:var(--surface);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+.field .fhint{font-size:11px;color:var(--txt3)}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--txt);font-family:var(--font-ui);transition:.12s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--surface2);border-color:var(--border2)}
+.btn-primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-primary:hover{background:var(--teal-l)}
+.btn-sm{padding:6px 13px;font-size:12px}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:#e0aaaa}
+.btn-success{background:var(--green-bg);color:var(--green);border-color:#afd48a}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding:16px;background:var(--surface2);border-radius:10px;margin-bottom:16px}
+.filter-bar .field{min-width:130px}
+.filter-bar .field input,.filter-bar .field select{padding:8px 11px;font-size:12px}
+
+/* ── TAT STANDARD ── */
+.tat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.tat-card{background:var(--surface);border-radius:var(--radius-lg);padding:18px;border:1px solid var(--border);border-left:4px solid var(--teal-mid);box-shadow:var(--shadow)}
+.tat-card.amber{border-left-color:var(--amber-l)}
+.tat-card .tc-name{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:8px}
+.tat-card .tc-sla{font-size:28px;font-weight:700;color:var(--teal);font-family:var(--font-head);line-height:1}
+.tat-card.amber .tc-sla{color:var(--amber)}
+.tat-card .tc-unit{font-size:11px;color:var(--txt3)}
+.tat-card .tc-desc{font-size:12px;color:var(--txt2);margin-top:6px;line-height:1.5}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--teal);color:#fff;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;transform:translateY(10px);transition:.25s;pointer-events:none;z-index:9999;box-shadow:0 4px 20px rgba(0,80,56,.35)}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* ── TAT PREVIEW ── */
+#tat-preview{display:none;background:var(--teal-bg);border:1px solid var(--teal-mid);border-radius:9px;padding:12px 16px;font-size:13px;color:var(--teal)}
+#tat-preview.over{background:var(--red-bg);border-color:#e0aaaa;color:var(--red)}
+
+/* ── INFO BOX ── */
+.info-box{background:var(--teal-bg);border-left:3px solid var(--teal-l);border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:18px;display:flex;gap:14px;align-items:flex-start}
+.info-box svg{width:22px;height:22px;flex-shrink:0;color:var(--teal);margin-top:1px}
+.info-box .ib-title{font-size:14px;font-weight:700;color:var(--teal);margin-bottom:3px}
+.info-box .ib-body{font-size:13px;color:var(--txt2);line-height:1.6}
+
+/* ── CONTACT GRID ── */
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.contact-card{background:var(--surface2);border-radius:10px;padding:14px}
+.contact-card .cc-lbl{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.contact-card .cc-val{font-size:13px;font-weight:700;color:var(--txt)}
+.contact-card .cc-sub{font-size:12px;color:var(--txt2);margin-top:2px}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <a class="brand" href="#">
+    <div class="brand-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2">
+        <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+        <circle cx="12" cy="14" r="2" fill="#02C39A" stroke="none"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>SIMPEL-TAT</h1>
+      <span>RSJ Prov. Sulawesi Tenggara</span>
+    </div>
+  </a>
+
+  <nav id="main-nav" style="display:none">
+    <button onclick="nav('dashboard')" id="btn-dashboard" class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button onclick="nav('input')" id="btn-input" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Input TAT
+    </button>
+    <button onclick="nav('riwayat')" id="btn-riwayat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Riwayat
+    </button>
+    <button onclick="nav('standar')" id="btn-standar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Standar TAT
+    </button>
+  </nav>
+
+  <div id="user-bar" style="display:none">
+    <div class="avatar" id="av">A</div>
+    <span id="uname">Admin</span>
+    <span class="role-badge" id="urole">admin</span>
+    <button class="logout-btn" onclick="logout()">Keluar</button>
+  </div>
+  <div id="login-hint" style="color:rgba(255,255,255,.6);font-size:12px">Silakan login</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2">
+        <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+        <circle cx="12" cy="14" r="2.5" fill="#1D9E75" stroke="none"/>
+      </svg>
+    </div>
+    <h2>SIMPEL-TAT</h2>
+    <div class="sub">Sistem Informasi Pelayanan Laboratorium<br>Turn Around Time<br>RSJ Provinsi Sulawesi Tenggara</div>
+    <div class="lf">
+      <label>Username</label>
+      <input type="text" id="inp-u" placeholder="admin / viewer" value="admin"/>
+    </div>
+    <div class="lf">
+      <label>Password</label>
+      <input type="password" id="inp-p" placeholder="••••••••" value="admin123" onkeydown="if(event.key==='Enter')login()"/>
+    </div>
+    <div id="login-err">Username atau password salah.</div>
+    <button class="login-btn-main" onclick="login()">Masuk ke Aplikasi</button>
+    <div class="login-hint">
+      <strong>Admin:</strong> admin / admin123 &nbsp;|&nbsp; <strong>Viewer:</strong> viewer / view123
+    </div>
+  </div>
+</div>
+
+<!-- APP CONTENT -->
+<div id="content" style="display:none">
+
+  <!-- ══ DASHBOARD ══ -->
+  <div id="sec-dashboard" class="section active">
+    <div class="page-hdr">
+      <div class="page-hdr-left">
+        <h2>Dashboard SIMPEL-TAT</h2>
+        <p>Monitoring Turn Around Time Laboratorium — Periode Januari s/d April 2026</p>
+      </div>
+      <div class="page-hdr-right">
+        <select id="d-unit" class="btn btn-sm" onchange="renderDashboard()" style="font-weight:600">
+          <option value="">Semua Unit</option>
+          <option>Klinik Psikiatri</option><option>Klinik MCU</option>
+          <option>Klinik Interna</option><option>Klinik Syaraf</option>
+        </select>
+        <select id="d-jenis" class="btn btn-sm" onchange="renderDashboard()" style="font-weight:600">
+          <option value="">Semua Pemeriksaan</option>
+          <option>Urin NAPZA Rapid</option><option>Kimia Klinik</option><option>Hematologi</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="stat-row" id="stat-row"></div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hdr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Status Kepatuhan TAT
+        </div>
+        <div class="donut-area">
+          <svg id="donut" width="130" height="130" viewBox="0 0 130 130"></svg>
+          <div class="dlegend" id="dlegend"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          Tren Bulanan (Jumlah Pemeriksaan)
+        </div>
+        <div class="mchart" id="mchart"></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hdr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Distribusi per Jenis Pemeriksaan
+        </div>
+        <div class="bchart" id="bc-jenis"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          Distribusi per Unit Pengirim
+        </div>
+        <div class="bchart" id="bc-unit"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        10 Data TAT Terbaru
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>No. Reg</th><th>Tanggal</th><th>Nama Pasien</th><th>No. RM</th><th>Unit</th><th>Pemeriksaan</th><th>Terima</th><th>Selesai</th><th>TAT</th><th>SLA</th><th>Status</th></tr></thead>
+          <tbody id="tbl-recent"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ INPUT TAT ══ -->
+  <div id="sec-input" class="section">
+    <div class="page-hdr">
+      <div class="page-hdr-left">
+        <h2>Input Data TAT</h2>
+        <p>Pencatatan penerimaan & penyelesaian spesimen laboratorium</p>
+      </div>
+      <div id="sla-badge" class="badge bg-gray" style="font-size:13px;padding:6px 14px">SLA: —</div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hdr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Formulir Input TAT
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="fgrid">
+            <div class="field"><label>No. Registrasi<span class="req">*</span></label><input id="f-reg" placeholder="LAB-2026-119"/></div>
+            <div class="field"><label>No. Rekam Medik<span class="req">*</span></label><input id="f-rm" placeholder="097XXX"/></div>
+          </div>
+          <div class="field ffull"><label>Nama Pasien<span class="req">*</span></label><input id="f-nama" placeholder="Nama lengkap pasien"/></div>
+          <div class="fgrid">
+            <div class="field"><label>Tanggal<span class="req">*</span></label><input type="date" id="f-tgl"/></div>
+            <div class="field"><label>Unit Pengirim<span class="req">*</span></label>
+              <select id="f-unit">
+                <option value="">— pilih unit —</option>
+                <option>Klinik Psikiatri</option><option>Klinik MCU</option>
+                <option>Klinik Interna</option><option>Klinik Syaraf</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Jenis Pemeriksaan<span class="req">*</span></label>
+            <select id="f-jenis" onchange="onJenisChange()">
+              <option value="">— pilih pemeriksaan —</option>
+              <option data-sla="30">Urin NAPZA Rapid</option>
+              <option data-sla="30">Hematologi</option>
+              <option data-sla="60">Kimia Klinik</option>
+              <option data-sla="60">Urin Rutin</option>
+              <option data-sla="60">Elektrolit Darah</option>
+              <option data-sla="120">Imuno-Serologi</option>
+              <option data-sla="120">Pemeriksaan Lainnya</option>
+            </select>
+          </div>
+          <div class="fgrid">
+            <div class="field">
+              <label>Jam Terima Spesimen<span class="req">*</span></label>
+              <input type="time" id="f-terima" oninput="calcPreview()"/>
+              <span class="fhint">Waktu spesimen diterima di laboratorium</span>
+            </div>
+            <div class="field">
+              <label>Jam Selesai / Validasi</label>
+              <input type="time" id="f-selesai" oninput="calcPreview()"/>
+              <span class="fhint">Kosongkan jika pemeriksaan belum selesai</span>
+            </div>
+          </div>
+          <div class="field"><label>Catatan</label><textarea id="f-catatan" rows="2" placeholder="Catatan tambahan (opsional)" style="resize:none;font-family:var(--font-ui)"></textarea></div>
+          <div id="tat-preview"></div>
+          <div style="display:flex;justify-content:flex-end;gap:10px">
+            <button class="btn" onclick="resetForm()">Reset</button>
+            <button class="btn btn-primary" onclick="submitForm()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M20 6L9 17l-5-5"/></svg>
+              Simpan Data
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-hdr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Standar SLA Referensi
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--teal-bg);border-radius:9px;border-left:3px solid var(--teal-l)">
+              <div style="width:36px;height:36px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div><div style="font-size:12px;font-weight:700;color:var(--teal)">Urin NAPZA Rapid & Hematologi</div><div style="font-size:11px;color:var(--txt2)">SLA Standar: <strong>30 menit</strong></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--blue-bg);border-radius:9px;border-left:3px solid #5BA3E0">
+              <div style="width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18"/></svg>
+              </div>
+              <div><div style="font-size:12px;font-weight:700;color:var(--blue)">Kimia Klinik, Urin Rutin, Elektrolit</div><div style="font-size:11px;color:var(--txt2)">SLA Standar: <strong>60 menit</strong></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--amber-bg);border-radius:9px;border-left:3px solid var(--amber-l)">
+              <div style="width:36px;height:36px;background:var(--amber);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+              <div><div style="font-size:12px;font-weight:700;color:var(--amber)">Imuno-Serologi & Pemeriksaan Lainnya</div><div style="font-size:11px;color:var(--txt2)">SLA Standar: <strong>120 menit</strong></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Panduan Pengisian
+          </div>
+          <ol style="padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--txt2)">
+            <li>Isi nomor registrasi & nomor rekam medik pasien</li>
+            <li>Masukkan nama lengkap pasien</li>
+            <li>Pilih unit pengirim spesimen</li>
+            <li>Pilih jenis pemeriksaan — SLA akan otomatis tampil</li>
+            <li>Input jam spesimen diterima di laboratorium</li>
+            <li>Setelah hasil keluar, isi jam selesai — TAT otomatis dihitung</li>
+            <li>Klik <strong>Simpan Data</strong></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RIWAYAT ══ -->
+  <div id="sec-riwayat" class="section">
+    <div class="page-hdr">
+      <div class="page-hdr-left">
+        <h2>Riwayat Data TAT</h2>
+        <p id="riwayat-count">Menampilkan semua 118 data</p>
+      </div>
+      <div class="page-hdr-right">
+        <button class="btn btn-sm btn-success" onclick="exportCSV()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="field"><label style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase">Cari Pasien / No.RM</label><input type="text" id="f-search" placeholder="Nama atau No. RM..." oninput="renderRiwayat()" style="width:190px"/></div>
+      <div class="field"><label style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase">Unit Pengirim</label>
+        <select id="ff-unit" onchange="renderRiwayat()">
+          <option value="">Semua Unit</option>
+          <option>Klinik Psikiatri</option><option>Klinik MCU</option>
+          <option>Klinik Interna</option><option>Klinik Syaraf</option>
+        </select>
+      </div>
+      <div class="field"><label style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase">Pemeriksaan</label>
+        <select id="ff-jenis" onchange="renderRiwayat()">
+          <option value="">Semua</option>
+          <option>Urin NAPZA Rapid</option><option>Kimia Klinik</option><option>Hematologi</option>
+        </select>
+      </div>
+      <div class="field"><label style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase">Status</label>
+        <select id="ff-status" onchange="renderRiwayat()">
+          <option value="">Semua Status</option>
+          <option>Sesuai TAT</option><option>Lewat TAT</option><option>Diproses</option>
+        </select>
+      </div>
+      <div class="field"><label style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase">Bulan</label>
+        <select id="ff-bulan" onchange="renderRiwayat()">
+          <option value="">Semua Bulan</option>
+          <option value="01">Januari</option><option value="02">Februari</option>
+          <option value="03">Maret</option><option value="04">April</option>
+        </select>
+      </div>
+      <button class="btn btn-sm" onclick="resetFilter()">Reset Filter</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No.</th><th>No. Reg</th><th>Tanggal</th><th>Nama Pasien</th><th>No. RM</th>
+            <th>Unit Pengirim</th><th>Pemeriksaan</th><th>Jam Terima</th><th>Jam Selesai</th>
+            <th>TAT (mnt)</th><th>SLA (mnt)</th><th>Status</th><th id="th-aksi" style="display:none">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-riwayat"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ STANDAR TAT ══ -->
+  <div id="sec-standar" class="section">
+    <div class="page-hdr">
+      <div class="page-hdr-left">
+        <h2>Standar TAT Laboratorium</h2>
+        <p>Informasi waktu pelayanan untuk Unit Instalansi Rawat Jalan — RSJ Prov. Sultra</p>
+      </div>
+      <span class="badge bg-teal" style="font-size:12px;padding:6px 14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Akses Publik
+      </span>
+    </div>
+
+    <div class="info-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <div>
+        <div class="ib-title">Apa itu Turn Around Time (TAT)?</div>
+        <div class="ib-body">TAT adalah waktu yang dibutuhkan sejak spesimen diterima di laboratorium hingga hasil pemeriksaan selesai dan dapat digunakan oleh tenaga medis untuk pengambilan keputusan klinis. TAT merupakan indikator mutu utama pelayanan laboratorium dan menjadi acuan transparansi informasi kepada seluruh unit pelayanan di rumah sakit.</div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--txt2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.4px">Standar Waktu per Jenis Pemeriksaan</div>
+    <div class="tat-grid">
+      <div class="tat-card"><div class="tc-name">Urin NAPZA Rapid</div><div class="tc-sla">30 <span class="tc-unit">menit</span></div><div class="tc-desc">Pemeriksaan narkoba & zat adiktif berbasis urin (rapid test). Hasil cepat untuk mendukung keputusan klinis segera.</div></div>
+      <div class="tat-card"><div class="tc-name">Hematologi</div><div class="tc-sla">30 <span class="tc-unit">menit</span></div><div class="tc-desc">Darah lengkap (CBC), hemoglobin, leukosit, trombosit, hematokrit.</div></div>
+      <div class="tat-card amber"><div class="tc-name">Kimia Klinik</div><div class="tc-sla">60 <span class="tc-unit">menit</span></div><div class="tc-desc">SGOT, SGPT, gula darah sewaktu/puasa, kreatinin, ureum, kolesterol, dan panel kimia darah lainnya.</div></div>
+      <div class="tat-card amber"><div class="tc-name">Urin Rutin</div><div class="tc-sla">60 <span class="tc-unit">menit</span></div><div class="tc-desc">Analisa urin lengkap meliputi pemeriksaan fisik, kimia, dan sedimen urin.</div></div>
+      <div class="tat-card amber"><div class="tc-name">Elektrolit Darah</div><div class="tc-sla">60 <span class="tc-unit">menit</span></div><div class="tc-desc">Panel elektrolit serum: Natrium (Na), Kalium (K), Klorida (Cl), Kalsium (Ca).</div></div>
+      <div class="tat-card amber"><div class="tc-name">Imuno-Serologi</div><div class="tc-sla">120 <span class="tc-unit">menit</span></div><div class="tc-desc">Anti-HIV, HBsAg, Anti-HCV, Widal, VDRL, dan pemeriksaan serologi lainnya.</div></div>
+      <div class="tat-card amber"><div class="tc-name">Pemeriksaan Lainnya</div><div class="tc-sla">120 <span class="tc-unit">menit</span></div><div class="tc-desc">Pemeriksaan laboratorium di luar kategori di atas, termasuk pemeriksaan khusus.</div></div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="card-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.5 12a19.79 19.79 0 01-3.07-8.67A2 2 0 013.4 1.26h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.91 8.4a16 16 0 006.29 6.29l1.7-1.71a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+        Informasi & Kontak Laboratorium
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card"><div class="cc-lbl">Lokasi Laboratorium</div><div class="cc-val">Gedung Penunjang Medik Lt. 1</div><div class="cc-sub">RSJ Prov. Sulawesi Tenggara</div></div>
+        <div class="contact-card"><div class="cc-lbl">Jam Pelayanan</div><div class="cc-val">Senin – Jumat</div><div class="cc-sub">07.30 – 14.00 WITA</div></div>
+        <div class="contact-card"><div class="cc-lbl">Penanggung Jawab</div><div class="cc-val">Asariawati, S.Tr.Kes</div><div class="cc-sub">Pranata Lab. Kesehatan Ahli Pertama<br>NIP. 20000131 202504 2 007</div></div>
+        <div class="contact-card"><div class="cc-lbl">Jika Hasil Melebihi SLA</div><div class="cc-val">Konfirmasi ke Loket Lab</div><div class="cc-sub">Sampaikan nomor registrasi & jenis pemeriksaan</div></div>
+        <div class="contact-card"><div class="cc-lbl">Inovasi</div><div class="cc-val">SIMPEL-TAT</div><div class="cc-sub">Latsar CPNS Gol. III Angkatan XXII — 2026<br>BPSDM Prov. Sulawesi Tenggara</div></div>
+        <div class="contact-card"><div class="cc-lbl">Nilai BerAKHLAK</div><div class="cc-val">Berorientasi Pelayanan</div><div class="cc-sub">Akuntabel · Adaptif · Kolaboratif · Harmonis</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<div id="toast"></div>
+
+<script>
+const USERS={admin:{pass:'admin123',role:'admin'},viewer:{pass:'view123',role:'viewer'}};
+const SLA={
+  'Urin NAPZA Rapid':30,'Hematologi':30,
+  'Kimia Klinik':60,'Urin Rutin':60,'Elektrolit Darah':60,
+  'Imuno-Serologi':120,'Pemeriksaan Lainnya':120
+};
+const BULAN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const COLORS=['#1D9E75','#185FA5','#BA7517','#3B6D11','#A32D2D','#533AB7','#993556'];
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbxAAC9yGgLsynPaAzngsnmRfsts34r6dYBMVn95XdPMHrCDchy1Le6v8x5u7itWLB3MHw/exec';
+
+let DB=[];
+let nextId=1;
+let currentRole=null;
+
+function sbadge(s){
+  const m={'Sesuai TAT':'bg-green','Lewat TAT':'bg-red','Diproses':'bg-amber'};
+  return `<span class="badge ${m[s]||'bg-gray'}">${s}</span>`;
+}
+function ubadge(u){
+  const m={'Klinik Psikiatri':'bg-teal','Klinik MCU':'bg-blue','Klinik Interna':'bg-amber','Klinik Syaraf':'bg-gray'};
+  return `<span class="badge ${m[u]||'bg-gray'}" style="font-size:10px">${u}</span>`;
+}
+
+function login(){
+  const u=document.getElementById('inp-u').value.trim();
+  const p=document.getElementById('inp-p').value;
+  const err=document.getElementById('login-err');
+  if(USERS[u]&&USERS[u].pass===p){
+    currentRole=USERS[u].role;
+    err.style.display='none';
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('content').style.display='block';
+    document.getElementById('main-nav').style.display='flex';
+    document.getElementById('user-bar').style.display='flex';
+    document.getElementById('login-hint').style.display='none';
+    document.getElementById('av').textContent=u[0].toUpperCase();
+    document.getElementById('uname').textContent=u==='admin'?'Admin':'Viewer';
+    document.getElementById('urole').textContent=currentRole;
+    if(currentRole==='admin') document.getElementById('btn-input').style.display='flex';
+    setToday();
+    loadDataFromSheet().then(()=>{ renderDashboard(); nav('dashboard'); }).catch(()=>{ renderDashboard(); nav('dashboard'); toast('Gagal memuat data dari Google Sheets'); });
+  } else { err.style.display='block'; }
+}
+function logout(){
+  currentRole=null;
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('content').style.display='none';
+  document.getElementById('main-nav').style.display='none';
+  document.getElementById('user-bar').style.display='none';
+  document.getElementById('login-hint').style.display='block';
+  document.getElementById('btn-input').style.display='none';
+}
+
+function nav(pg){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('#main-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+pg).classList.add('active');
+  document.getElementById('btn-'+pg).classList.add('active');
+  if(pg==='riwayat') renderRiwayat();
+  if(pg==='dashboard') renderDashboard();
+}
+
+function setToday(){
+  document.getElementById('f-tgl').value=new Date().toISOString().split('T')[0];
+  document.getElementById('f-reg').value='LAB-2026-'+String(nextId).padStart(3,'0');
+  const now=new Date();
+  document.getElementById('f-terima').value=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+}
+
+function filterDB(){
+  const u=document.getElementById('d-unit').value;
+  const j=document.getElementById('d-jenis').value;
+  return DB.filter(d=>(u?d.unit===u:true)&&(j?d.jenis===j:true));
+}
+
+function renderDashboard(){
+  const d=filterDB();
+  const total=d.length;
+  const selesai=d.filter(x=>x.selesai).length;
+  const sesuat=d.filter(x=>x.status==='Sesuai TAT').length;
+  const lewat=d.filter(x=>x.status==='Lewat TAT').length;
+  const diproses=d.filter(x=>x.status==='Diproses').length;
+  const tats=d.filter(x=>x.tat>0).map(x=>x.tat);
+  const avgtat=tats.length?Math.round(tats.reduce((a,b)=>a+b,0)/tats.length):0;
+  const pct=selesai>0?+(sesuat/selesai*100).toFixed(1):0;
+
+  document.getElementById('stat-row').innerHTML=`
+    <div class="stat-card sc-teal"><div class="sc-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>Total Data</div><div class="sc-val">${total}</div><div class="sc-sub">pemeriksaan tercatat</div></div>
+    <div class="stat-card sc-green"><div class="sc-label">Selesai</div><div class="sc-val">${selesai}</div><div class="sc-sub">${diproses} sedang diproses</div></div>
+    <div class="stat-card sc-green"><div class="sc-label">Sesuai TAT</div><div class="sc-val">${sesuat}</div><div class="sc-sub">dari ${selesai} data selesai</div></div>
+    <div class="stat-card sc-red"><div class="sc-label">Lewat TAT</div><div class="sc-val">${lewat}</div><div class="sc-sub">melampaui standar SLA</div></div>
+    <div class="stat-card sc-blue"><div class="sc-label">Kepatuhan TAT</div><div class="sc-val">${pct}%</div><div class="sc-sub">Rata-rata TAT: ${avgtat} menit</div></div>
+  `;
+
+  // Donut
+  const ddata=[{l:'Sesuai TAT',v:sesuat,c:'#1D9E75'},{l:'Lewat TAT',v:lewat,c:'#E24B4A'},{l:'Diproses',v:diproses,c:'#FAC775'}].filter(x=>x.v>0);
+  const dsvg=document.getElementById('donut');
+  const cx=65,cy=65,r=48,sw=20;
+  let ang=-Math.PI/2;
+  const sum=ddata.reduce((a,b)=>a+b.v,0)||1;
+  const arcs=ddata.map(x=>{
+    const a=x.v/sum*2*Math.PI;
+    const x1=cx+r*Math.cos(ang),y1=cy+r*Math.sin(ang);
+    ang+=a;
+    const x2=cx+r*Math.cos(ang),y2=cy+r*Math.sin(ang);
+    return `<path d="M${cx},${cy}L${x1},${y1}A${r},${r},0,${a>Math.PI?1:0},1,${x2},${y2}Z" fill="${x.c}" opacity=".92"/>`;
+  });
+  dsvg.innerHTML=arcs.join('')+`<circle cx="${cx}" cy="${cy}" r="${r-sw}" fill="#fff"/><text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="18" font-weight="700" fill="#0F6E56">${pct}%</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="10" fill="#4A6358">kepatuhan</text>`;
+  document.getElementById('dlegend').innerHTML=ddata.map(x=>`<div class="dleg-item"><div class="dleg-dot" style="background:${x.c}"></div><span>${x.l}: <strong>${x.v}</strong></span></div>`).join('');
+
+  // Monthly
+  const monthly={};
+  d.forEach(x=>{const m=x.tgl.substring(5,7);monthly[m]=(monthly[m]||0)+1;});
+  const months=['01','02','03','04'];
+  const maxM=Math.max(...months.map(m=>monthly[m]||0),1);
+  document.getElementById('mchart').innerHTML=months.map(m=>{
+    const v=monthly[m]||0;
+    const h=Math.round(v/maxM*100);
+    return `<div class="mbar-wrap"><div class="mbar-val">${v||''}</div><div class="mbar-col" style="height:${h}px;background:${v>0?'#1D9E75':'#D4E5DE'}"></div><div class="mbar-lbl">${BULAN[parseInt(m)-1]}</div></div>`;
+  }).join('');
+
+  // Bar jenis
+  const bj={};
+  d.forEach(x=>{bj[x.jenis]=(bj[x.jenis]||0)+1;});
+  const mj=Math.max(...Object.values(bj),1);
+  document.getElementById('bc-jenis').innerHTML=Object.entries(bj).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`
+    <div class="brow"><div class="blbl" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mj*100)}%;background:${COLORS[i%COLORS.length]}">${v}</div></div><div class="bstat">${Math.round(v/total*100)}%</div></div>`).join('');
+
+  // Bar unit
+  const bu={};
+  d.forEach(x=>{bu[x.unit]=(bu[x.unit]||0)+1;});
+  const mu=Math.max(...Object.values(bu),1);
+  document.getElementById('bc-unit').innerHTML=Object.entries(bu).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`
+    <div class="brow"><div class="blbl" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mu*100)}%;background:${COLORS[i%COLORS.length]}">${v}</div></div><div class="bstat">${v}</div></div>`).join('');
+
+  // Recent 10
+  document.getElementById('tbl-recent').innerHTML=[...d].reverse().slice(0,10).map(x=>`
+    <tr><td style="font-size:12px;font-weight:600">${x.noreg}</td>
+    <td style="font-size:12px">${x.tgl}</td>
+    <td>${x.nama}</td>
+    <td style="font-size:12px;color:#4A6358">${x.rm}</td>
+    <td>${ubadge(x.unit)}</td>
+    <td style="font-size:12px">${x.jenis}</td>
+    <td style="font-size:12px">${x.terima}</td>
+    <td style="font-size:12px">${x.selesai||'—'}</td>
+    <td style="text-align:center;font-weight:700;color:${x.tat<=x.sla?'#1D9E75':'#A32D2D'}">${x.tat}</td>
+    <td style="text-align:center;font-size:12px;color:#8BA99C">${x.sla}</td>
+    <td>${sbadge(x.status)}</td></tr>`).join('');
+}
+
+function renderRiwayat(){
+  const s=(document.getElementById('f-search').value||'').toLowerCase();
+  const fu=document.getElementById('ff-unit').value;
+  const fj=document.getElementById('ff-jenis').value;
+  const fs=document.getElementById('ff-status').value;
+  const fb=document.getElementById('ff-bulan').value;
+  const isAdmin=currentRole==='admin';
+  document.getElementById('th-aksi').style.display=isAdmin?'':'none';
+  const rows=[...DB].reverse().filter(x=>{
+    if(s&&!x.nama.toLowerCase().includes(s)&&!x.rm.includes(s)&&!x.noreg.toLowerCase().includes(s))return false;
+    if(fu&&x.unit!==fu)return false;
+    if(fj&&x.jenis!==fj)return false;
+    if(fs&&x.status!==fs)return false;
+    if(fb&&x.tgl.substring(5,7)!==fb)return false;
+    return true;
+  });
+  document.getElementById('riwayat-count').textContent=`Menampilkan ${rows.length} dari ${DB.length} data`;
+  document.getElementById('tbl-riwayat').innerHTML=rows.map((x,i)=>`
+    <tr>
+      <td style="font-size:12px;color:#8BA99C">${rows.length-i}</td>
+      <td style="font-size:12px;font-weight:600">${x.noreg}</td>
+      <td style="font-size:12px">${x.tgl}</td>
+      <td style="font-weight:500">${x.nama}</td>
+      <td style="font-size:12px;color:#4A6358">${x.rm}</td>
+      <td>${ubadge(x.unit)}</td>
+      <td style="font-size:12px">${x.jenis}</td>
+      <td style="font-size:12px">${x.terima}</td>
+      <td style="font-size:12px">${x.selesai||'—'}</td>
+      <td style="text-align:center;font-weight:700;font-size:14px;color:${x.tat<=x.sla?'#1D9E75':'#A32D2D'}">${x.tat}</td>
+      <td style="text-align:center;font-size:12px;color:#8BA99C">${x.sla}</td>
+      <td>${sbadge(x.status)}</td>
+      ${isAdmin?`<td><button class="btn btn-danger btn-sm" onclick="delRow(${x.id})">Hapus</button></td>`:''}
+    </tr>`).join('')||'<tr><td colspan="13" style="text-align:center;padding:30px;color:#8BA99C">Tidak ada data yang cocok dengan filter</td></tr>';
+}
+
+function resetFilter(){
+  ['f-search','ff-unit','ff-jenis','ff-status','ff-bulan'].forEach(id=>{document.getElementById(id).value='';});
+  renderRiwayat();
+}
+
+async function delRow(id){
+  if(!confirm('Hapus data ini permanen?'))return;
+  try{
+    await deleteDataFromSheet(id);
+    DB=DB.filter(x=>x.id!==id);
+    renderRiwayat();
+    renderDashboard();
+    toast('Data berhasil dihapus');
+  }catch(err){
+    console.error(err);
+    alert('Gagal menghapus data di Google Sheets.');
+  }
+}
+
+function onJenisChange(){
+  const sel=document.getElementById('f-jenis');
+  const opt=sel.options[sel.selectedIndex];
+  const sla=SLA[opt.value]||null;
+  const badge=document.getElementById('sla-badge');
+  if(sla){badge.textContent='SLA Standar: '+sla+' menit';badge.className='badge bg-teal';}
+  else{badge.textContent='SLA: —';badge.className='badge bg-gray';}
+  calcPreview();
+}
+
+function calcPreview(){
+  const terima=document.getElementById('f-terima').value;
+  const selesai=document.getElementById('f-selesai').value;
+  const jenis=document.getElementById('f-jenis').value;
+  const sla=SLA[jenis];
+  const p=document.getElementById('tat-preview');
+  if(terima&&selesai&&sla){
+    const [th,tm]=terima.split(':').map(Number);
+    const [sh,sm]=selesai.split(':').map(Number);
+    const tat=(sh*60+sm)-(th*60+tm);
+    if(tat>0){
+      const ok=tat<=sla;
+      p.style.display='block';
+      p.className=ok?'':'over';
+      p.innerHTML=`<strong>TAT Dihitung: ${tat} menit</strong> &nbsp;|&nbsp; SLA: ${sla} menit &nbsp;|&nbsp; ${ok?'✓ Sesuai TAT':'✗ Melampaui SLA'}`;
+    }else{p.style.display='none';}
+  }else{p.style.display='none';}
+}
+
+
+async function submitForm(){
+  const noreg=document.getElementById('f-reg').value.trim();
+  const rm=document.getElementById('f-rm').value.trim();
+  const nama=document.getElementById('f-nama').value.trim();
+  const tgl=document.getElementById('f-tgl').value;
+  const unit=document.getElementById('f-unit').value;
+  const jenis=document.getElementById('f-jenis').value;
+  const terima=document.getElementById('f-terima').value;
+  if(!noreg||!rm||!nama||!tgl||!unit||!jenis||!terima){alert('Harap lengkapi semua field wajib (*)');return;}
+  const selesai=document.getElementById('f-selesai').value||'';
+  const catatan=document.getElementById('f-catatan').value||'';
+  const sla=SLA[jenis]||60;
+  let tat=0,status='Diproses';
+  if(selesai){
+    const [th,tm]=terima.split(':').map(Number);
+    const [sh,sm]=selesai.split(':').map(Number);
+    tat=(sh*60+sm)-(th*60+tm);
+    status=tat<=sla?'Sesuai TAT':'Lewat TAT';
+  }
+  const row={id:nextId,noreg,tgl,nama,rm,unit,jenis,terima,selesai,tat,sla,status,catatan};
+  try{
+    await saveDataToSheet(row);
+    DB.push(row);
+    nextId++;
+    resetForm();
+    toast('✓ Data '+noreg+' berhasil disimpan!');
+    setTimeout(()=>nav('riwayat'),500);
+  }catch(err){
+    console.error(err);
+    alert('Gagal menyimpan ke Google Sheets. Pastikan URL Apps Script benar dan web app sudah dideploy.');
+  }
+}
+
+
+function resetForm(){
+  ['f-rm','f-nama','f-catatan'].forEach(id=>document.getElementById(id).value='');
+  ['f-unit','f-jenis'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-selesai').value='';
+  document.getElementById('tat-preview').style.display='none';
+  document.getElementById('sla-badge').textContent='SLA: —';
+  document.getElementById('sla-badge').className='badge bg-gray';
+  setToday();
+}
+
+function exportCSV(){
+  const bom='\uFEFF';
+  const hdr=['No','No. Registrasi','Tanggal','Nama Pasien','No. RM','Unit Pengirim','Jenis Pemeriksaan','Jam Terima','Jam Selesai','TAT (Menit)','SLA (Menit)','Status','Catatan'];
+  const rows=DB.map((x,i)=>[i+1,x.noreg,x.tgl,x.nama,x.rm,x.unit,x.jenis,x.terima,x.selesai||'',x.tat,x.sla,x.status,x.catatan]);
+  const csv=bom+[hdr,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='SIMPEL_TAT_Data_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  toast('✓ File CSV berhasil diunduh');
+}
+
+
+async function loadDataFromSheet(){
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==='PASTE_WEB_APP_URL_HERE'){ return; }
+  const res = await fetch(APPS_SCRIPT_URL);
+  const json = await res.json();
+  DB = (json.data || []).map(r => ({
+    id:Number(r.id)||0,
+    noreg:r.noreg||'',
+    tgl:r.tgl||'',
+    nama:r.nama||'',
+    rm:r.rm||'',
+    unit:r.unit||'',
+    jenis:r.jenis||'',
+    terima:r.terima||'',
+    selesai:r.selesai||'',
+    tat:Number(r.tat)||0,
+    sla:Number(r.sla)||0,
+    status:r.status||'Diproses',
+    catatan:r.catatan||''
+  }));
+  nextId = (DB.reduce((m,x)=>Math.max(m, Number(x.id)||0), 0) || 0) + 1;
+}
+
+async function saveDataToSheet(row){
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action:'add', row})
+  });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'Save failed');
+}
+
+async function deleteDataFromSheet(id){
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action:'delete', id})
+  });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'Delete failed');
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>
